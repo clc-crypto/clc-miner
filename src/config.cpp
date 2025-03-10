@@ -12,17 +12,17 @@ Config::Config(const string& path) {
     ifstream file(path);
     if (!file.is_open()) {
         cout << YELLOW << "Error opening config file: " << path << RESET << endl;
-        cout << "Creating a empty config file..." << endl;
-        std::ofstream file("clcminer.json");
+        cout << "Creating an empty config file..." << endl;
+        std::ofstream newFile("clcminer.json");
 
-        if (file.is_open()) {
-            file << "{}";
-            file.close();
+        if (newFile.is_open()) {
+            newFile << "{}";
+            newFile.close();
             std::cout << "Config created successfully";
         } else {
             std::cerr << "Error creating config file";
         }
-        cout << RED << "Reset clcminer to apply config!" << RESET << endl;
+        cout << RED << "Reset clcminer to apply new config!" << RESET << endl;
         exit(1);
     }
 
@@ -30,22 +30,23 @@ Config::Config(const string& path) {
     file >> configData;
     file.close();
 
-    if (configData.contains("server")) {
+    // Correct assignments
+    if (configData.contains("server") && configData["server"].is_string()) {
         server = configData["server"].get<string>();
     } else {
         cout << YELLOW << "Warning: 'server' key not found in config file! Defaulting to `http://localhost:3000`" << RESET << endl;
         server = "http://localhost:3000";
     }
 
-    if (configData.contains("rewardsDir")) {
-        server = configData["rewardsDir"].get<string>();
+    if (configData.contains("rewardsDir") && configData["rewardsDir"].is_string()) {
+        rewards = configData["rewardsDir"].get<string>();  // ✅ Corrected
     } else {
-        cout << YELLOW << "Warning: 'rewards' key not found in config file! Defaulting to `rewards`" << RESET << endl;
+        cout << YELLOW << "Warning: 'rewardsDir' key not found in config file! Defaulting to `rewards`" << RESET << endl;
         rewards = "rewards";
     }
 
-    if (configData.contains("threads")) {
-        server = configData["threads"].get<int>();
+    if (configData.contains("threads") && configData["threads"].is_number_integer()) {
+        threads = configData["threads"].get<int>();  // ✅ Corrected
     } else {
         cout << YELLOW << "Warning: 'threads' key not found in config file! Defaulting to `-1`" << RESET << endl;
         threads = -1;

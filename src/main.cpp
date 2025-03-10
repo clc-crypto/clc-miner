@@ -76,7 +76,7 @@ void updateJob() {
         SEED = data["seed"];
         DIFF = uint256(data["diff"].get<std::string>());
 
-        cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << data["reward"] << "\n" << endl;
+        cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << GREEN << data["reward"] << RESET << endl << endl;
         i = 0;
     }
 }
@@ -99,7 +99,7 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     curl_easy_cleanup(curl);
 
     if (res != CURLE_OK) return;
-
+    
     json data = json::parse(response);
     std::lock_guard<std::mutex> lock(job_mutex);
 
@@ -227,7 +227,12 @@ void mine(int thread_id) {
 }
 
 int main() {
-    cout << GREEN << "Starting CLC miner...\nSyncing job..." << RESET << endl;
+    cout << GREEN << "Starting CLC miner...\nSyncing job..." << RESET << endl << endl;
+    cout << YELLOW << "clcminer.json config:" << RESET << endl;
+    cout << BLUE << "Server: " << cfg.getServer().c_str() << endl;
+    int t = cfg.getThreads();
+    if (t == -1) t = thread::hardware_concurrency();
+    cout << "Threads: " << RESET << RED << t << RESET << endl;
 
     updateJob();
     thread jobThread([]() {
