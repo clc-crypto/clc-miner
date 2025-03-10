@@ -11,6 +11,8 @@
 #include <fstream>
 #include <cassert>
 #include "lib/uint256.h"
+#include "config.h"
+#include "colors.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -19,6 +21,8 @@ std::string SEED = "wait";
 uint256 DIFF("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 std::mutex job_mutex;
 secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+
+Config cfg("clcminer.json");
 
 int i = 0;
 int totalHashes = 0;  // Shared variable to track the total number of hashes across all threads
@@ -47,7 +51,9 @@ void updateJob() {
     CURL* curl = curl_easy_init();
     if (!curl) return;
 
-    curl_easy_setopt(curl, CURLOPT_URL, "http://192.168.0.27:3000/get-challenge");
+    string url = cfg.getServer() + "/get-challenge";
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
         output->append((char*)contents, size * nmemb);
         return size * nmemb;
@@ -58,7 +64,10 @@ void updateJob() {
     CURLcode res = curl_easy_perform(curl);
     curl_easy_cleanup(curl);
 
-    if (res != CURLE_OK) return;
+    if (res != CURLE_OK) {
+        cout << RED << "Error syncing job status: " << res << " url: " << url << RESET << endl;
+        return;
+    }
 
     json data = json::parse(response);
     std::lock_guard<std::mutex> lock(job_mutex);
@@ -67,7 +76,7 @@ void updateJob() {
         SEED = data["seed"];
         DIFF = uint256(data["diff"].get<std::string>());
 
-        cout << "\nNEW JOB\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << data["reward"] << "\n" << endl;
+        cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << data["reward"] << "\n" << endl;
         i = 0;
     }
 }
@@ -77,7 +86,7 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     CURL* curl = curl_easy_init();
     if (!curl) return;
 
-    string url = "http://192.168.0.27:3000/challenge-solved?holder=" + pubKeyHex + "&sign=" + sign + "&hash=" + hashHex;
+    string url = cfg.getServer() + "/challenge-solved?holder=" + pubKeyHex + "&sign=" + sign + "&hash=" + hashHex;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
         output->append((char*)contents, size * nmemb);
@@ -94,11 +103,14 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     json data = json::parse(response);
     std::lock_guard<std::mutex> lock(job_mutex);
 
-    ofstream outputFile("rewards/" + to_string(data["id"].get<int>()) + ".coin");
+    ofstream outputFile(cfg.getRewardsDir() + "/" + to_string(data["id"].get<int>()) + ".coin");
     if (outputFile.is_open()) {
         outputFile << privHexKey;
         outputFile.close();
-    } else assert(false);
+    } else {
+        cout << RED << "Error: " << cfg.getRewardsDir() << " directory does not exist!" << RESET << endl;
+        assert(false);
+    }
 }
 
 // Mining function for each thread
@@ -133,7 +145,7 @@ void mine(int thread_id) {
 
         // check if the hash meets the difficulty criteria
         if (hashValue <= DIFF) {
-            cout << "\nFound CLC!\nPublic Key: " << pubKeyHex << "\nPrivate Key: ";
+            cout << GREEN << "\nFound CLC!" << RESET << "\nPublic Key: " << pubKeyHex << "\nPrivate Key: ";
             for (int j = 0; j < 32; j++) printf("%02x", privateKey[j]);
             cout << "\nHash: " << hashHex << endl;
             
@@ -165,7 +177,7 @@ void mine(int thread_id) {
                     }
 
                     // Submit the found hash
-                    cout << "Signature: " << signHex << endl << endl;
+                    cout << GREEN << "Signature: " << signHex << RESET << endl << endl;
                     submitHash(pubKeyHex, signHex, hashHex, privKeyHex);
                 }
             }
@@ -204,7 +216,7 @@ void mine(int thread_id) {
                     unit = "KH";
                 }
         
-                cout << "Hash Rate: " << readableHashRate << " " << unit << "/sec" << endl;
+                cout << YELLOW << "Hash Rate: " << readableHashRate << " " << unit << "/sec" << RESET << endl;
         
                 // Reset the counters
                 startTime = chrono::steady_clock::now();
@@ -215,7 +227,7 @@ void mine(int thread_id) {
 }
 
 int main() {
-    cout << "Starting CLC miner...\nSyncing job..." << endl;
+    cout << GREEN << "Starting CLC miner...\nSyncing job..." << RESET << endl;
 
     updateJob();
     thread jobThread([]() {
@@ -226,7 +238,11 @@ int main() {
     });
 
     vector<thread> threads;
-    int numThreads = thread::hardware_concurrency();
+    int numThreads = 1;
+    // check if number of threads is specified in clc config
+    if (cfg.getThreads() == -1) numThreads = thread::hardware_concurrency();
+    else numThreads = cfg.getThreads();
+
     for (int i = 0; i < numThreads; i++) {
         threads.emplace_back(mine, i);
     }

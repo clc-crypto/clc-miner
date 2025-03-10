@@ -10,5 +10,5 @@ find_package(Threads REQUIRED)
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
-add_executable(clcminer src/main.cpp src/lib/uint256.cpp)
-target_link_libraries(clcminer OpenSSL::Crypto Threads::Threads secp256k1 curl)
+add_executable(clcminer src/main.cpp src/lib/uint256.cpp src/config.cpp)
+target_link_libraries(clcminer OpenSSL::Crypto Threads::Threads secp256k1 curl config)
