@@ -6,7 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <stdint>
+#include <cstdint>
 
 class uint256 {
 private:
