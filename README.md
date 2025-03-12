@@ -23,5 +23,16 @@ rm -fr build
 Run the miner
 ```./clcminer```
 
-### Very Important!
-#### For your coins to be saved during mining, create a "rewards" directory beside the clcminer executable.
+### OR
+
+# Use pre-built x64 clcminer
+
+Clone this repository locally
+```bash
+git clone https://github.com/clc-crypto/clc-miner.git
+```
+
+Run clc-miner
+```bash
+./clcminer64
+```
