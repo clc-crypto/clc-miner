@@ -3,9 +3,11 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <filesystem>
 #include "colors.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 Config::Config(const string& path) {
@@ -34,19 +36,27 @@ Config::Config(const string& path) {
     if (configData.contains("server") && configData["server"].is_string()) {
         server = configData["server"].get<string>();
     } else {
-        cout << YELLOW << "Warning: 'server' key not found in config file! Defaulting to `http://localhost:3000`" << RESET << endl;
-        server = "http://localhost:3000";
+        cout << YELLOW << "Warning: 'server' key not found in config file! Defaulting to `https://clc.ix.tc`" << RESET << endl;
+        server = "https://clc.ix.tc";
     }
 
     if (configData.contains("rewardsDir") && configData["rewardsDir"].is_string()) {
-        rewards = configData["rewardsDir"].get<string>();  // ✅ Corrected
+        rewards = configData["rewardsDir"].get<string>();
     } else {
         cout << YELLOW << "Warning: 'rewardsDir' key not found in config file! Defaulting to `rewards`" << RESET << endl;
         rewards = "rewards";
     }
 
+    if (!fs::exists(rewards)) {
+        if (fs::create_directory(rewards)) {
+            cout << GREEN << "Created rewards dir: " << rewards << RESET << endl;
+        } else {
+            cout << RED << "Failed to create rewards dir: " << rewards << RESET << endl;
+        }
+    }
+
     if (configData.contains("threads") && configData["threads"].is_number_integer()) {
-        threads = configData["threads"].get<int>();  // ✅ Corrected
+        threads = configData["threads"].get<int>();
     } else {
         cout << YELLOW << "Warning: 'threads' key not found in config file! Defaulting to `-1`" << RESET << endl;
         threads = -1;
