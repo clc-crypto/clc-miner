@@ -86,7 +86,7 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     CURL* curl = curl_easy_init();
     if (!curl) return;
 
-    string url = cfg.getServer() + "/challenge-solved?holder=" + pubKeyHex + "&signs=" + sign + "&hash=" + hashHex;
+    string url = cfg.getServer() + "/challenge-solved?holder=" + pubKeyHex + "&sign=" + sign + "&hash=" + hashHex;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
         output->append((char*)contents, size * nmemb);
@@ -104,7 +104,8 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     std::lock_guard<std::mutex> lock(job_mutex);
 
     if (!data.contains("id")) {
-        cout << RED << "Invalid coin hash submitted!" << RESET << endl;
+        if (data.contains("error")) cout << YELLOW << data["error"].get<string>() << RESET << endl;
+        else cout << RED << "Error submitting hash: " << response << RESET << endl;
         return;
     }
 
