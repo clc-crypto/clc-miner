@@ -23,9 +23,9 @@ rm -fr build
 Run the miner
 ```./clcminer```
 
-### OR
+## OR
 
-# Use pre-built x64 clcminer
+### Use pre-built x64 clcminer
 
 Clone this repository locally
 ```bash
