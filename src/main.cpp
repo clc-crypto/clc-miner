@@ -19,6 +19,7 @@ using json = nlohmann::json;
 
 std::string SEED = "wait";
 uint256 DIFF("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+float REWARD = 0;
 std::mutex job_mutex;
 secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
 
@@ -27,6 +28,7 @@ Config cfg("clcminer.json");
 int i = 0;
 int totalHashes = 0;  // Shared variable to track the total number of hashes across all threads
 int hashRate = 0;
+int mined = 0; // total amount of mined CLC
 
 uint256 best("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 std::mutex hash_mutex;  // Mutex to protect totalHashes
@@ -55,7 +57,7 @@ void report() {
     CURL* curl = curl_easy_init();
     if (!curl) return;
 
-    string url = cfg.getReportServer() + "/report?user=" + cfg.getReportUser() + "&speed=" + to_string(hashRate) + "&best=" + best.toHex();
+    string url = cfg.getReportServer() + "/report?user=" + cfg.getReportUser() + "&speed=" + to_string(hashRate) + "&best=" + best.toHex() + "&mined=" + to_string(mined);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
         output->append((char*)contents, size * nmemb);
@@ -99,8 +101,9 @@ void updateJob() {
         SEED = data["seed"];
         best = uint256("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
         DIFF = uint256(data["diff"].get<std::string>());
+        REWARD = data["reward"];
 
-        cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << GREEN << data["reward"] << RESET << endl << endl;
+        cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << GREEN << REWARD << RESET << endl << endl;
         i = 0;
     }
 }
@@ -134,6 +137,8 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
     }
 
     cout << GREEN << "Submmited successfully" << RESET << endl;
+
+    mined += REWARD;
 
     ofstream outputFile(cfg.getRewardsDir() + "/" + to_string(data["id"].get<int>()) + ".coin");
     if (outputFile.is_open()) {
