@@ -61,6 +61,18 @@ Config::Config(const string& path) {
         cout << YELLOW << "Warning: 'threads' key not found in config file! Defaulting to `-1`" << RESET << endl;
         threads = -1;
     }
+
+    if (configData.contains("reportServer") && configData["reportServer"].is_string()) {
+        reportServer = configData["reportServer"].get<string>();
+    } else {
+        reportServer = "none";
+    }
+
+    if (configData.contains("reportUser") && configData["reportUser"].is_string()) {
+        reportUser = configData["reportUser"].get<string>();
+    } else {
+        reportUser = "none";
+    }
 }
 
 string Config::getServer() const {
@@ -73,4 +85,12 @@ string Config::getRewardsDir() const {
 
 int Config::getThreads() const {
     return threads;
+}
+
+string Config::getReportServer() const {
+    return reportServer;
+}
+
+string Config::getReportUser() const {
+    return reportUser;
 }

@@ -26,6 +26,8 @@ Config cfg("clcminer.json");
 
 int i = 0;
 int totalHashes = 0;  // Shared variable to track the total number of hashes across all threads
+int hashRate = 0;
+
 uint256 best("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 std::mutex hash_mutex;  // Mutex to protect totalHashes
 
@@ -45,6 +47,27 @@ string sha256(const string& input) {
 
 void sha256_array(const string& input, unsigned char msg_hash[32]) {
     SHA256(reinterpret_cast<const unsigned char*>(input.c_str()), input.size(), msg_hash);
+}
+
+// Function to update mining job
+void report() {
+    if (cfg.getReportServer() == "none") return;
+    CURL* curl = curl_easy_init();
+    if (!curl) return;
+
+    string url = cfg.getReportServer() + "/report?user=" + cfg.getReportUser() + "&speed=" + to_string(hashRate) + "&best=" + best.toHex();
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
+        output->append((char*)contents, size * nmemb);
+        return size * nmemb;
+    });
+
+    string response;
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK) cout << RED << "Error reporting: " << res << " url: " << url << RESET << endl;
 }
 
 // Function to update mining job
@@ -109,7 +132,7 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
         else cout << RED << "Error submitting hash: " << response << RESET << endl;
         return;
     }
-    
+
     cout << GREEN << "Submmited successfully" << RESET << endl;
 
     ofstream outputFile(cfg.getRewardsDir() + "/" + to_string(data["id"].get<int>()) + ".coin");
@@ -208,7 +231,7 @@ void mine(int thread_id) {
             auto seconds = chrono::duration_cast<chrono::seconds>(elapsed).count();
             if (seconds >= 4) {
                 double hashesPerSecond = static_cast<double>(totalHashes) / seconds;
-                
+                hashRate = hashesPerSecond;
                 // Determine the appropriate unit
                 string unit = "H";
                 double readableHashRate = hashesPerSecond;
@@ -238,6 +261,7 @@ void mine(int thread_id) {
 }
 
 int main() {
+    if (cfg.getReportServer() != "none") cout << BLUE << "Going to report performance to: " << cfg.getReportServer() << "/report" << RESET << endl;
     cout << GREEN << "Starting CLC miner...\nSyncing job..." << RESET << endl << endl;
     cout << YELLOW << "clcminer.json config:" << RESET << endl;
     cout << BLUE << "Server: " << cfg.getServer().c_str() << endl;
@@ -249,6 +273,8 @@ int main() {
     thread jobThread([]() {
         while (true) {
             updateJob();
+            this_thread::sleep_for(chrono::seconds(4));
+            report();
             this_thread::sleep_for(chrono::seconds(1));
         }
     });
