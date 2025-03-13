@@ -53,7 +53,6 @@ void updateJob() {
     if (!curl) return;
 
     string url = cfg.getServer() + "/get-challenge";
-
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
         output->append((char*)contents, size * nmemb);
@@ -87,7 +86,7 @@ void updateJob() {
 void submitHash(const string& pubKeyHex, const string& sign, const string& hashHex, const string& privHexKey) {
     CURL* curl = curl_easy_init();
     if (!curl) return;
-
+    
     string url = cfg.getServer() + "/challenge-solved?holder=" + pubKeyHex + "&sign=" + sign + "&hash=" + hashHex;
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, +[](void* contents, size_t size, size_t nmemb, string* output) -> size_t {
@@ -110,6 +109,8 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
         else cout << RED << "Error submitting hash: " << response << RESET << endl;
         return;
     }
+    
+    cout << GREEN << "Submmited successfully" << RESET << endl;
 
     ofstream outputFile(cfg.getRewardsDir() + "/" + to_string(data["id"].get<int>()) + ".coin");
     if (outputFile.is_open()) {
@@ -151,9 +152,7 @@ void mine(int thread_id) {
         string hashHex = sha256(pubKeyHex + SEED);
         uint256 hashValue(hashHex);
         
-        if (hashValue <= best) {
-            best = hashValue;
-        }
+        if (hashValue <= best) best = hashValue;
 
         // check if the hash meets the difficulty criteria
         if (hashValue <= DIFF) {
