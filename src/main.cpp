@@ -26,6 +26,7 @@ Config cfg("clcminer.json");
 
 int i = 0;
 int totalHashes = 0;  // Shared variable to track the total number of hashes across all threads
+uint256 best("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 std::mutex hash_mutex;  // Mutex to protect totalHashes
 
 // Function to perform SHA-256 hashing
@@ -74,6 +75,7 @@ void updateJob() {
 
     if (data["seed"] != SEED) {
         SEED = data["seed"];
+        best = uint256("0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
         DIFF = uint256(data["diff"].get<std::string>());
 
         cout << BLUE << "\nNEW JOB" << RESET << "\nDIFF: " << DIFF.toHex() << "\nSEED: " << SEED << "\nREWARD: " << GREEN << data["reward"] << RESET << endl << endl;
@@ -148,6 +150,10 @@ void mine(int thread_id) {
 
         string hashHex = sha256(pubKeyHex + SEED);
         uint256 hashValue(hashHex);
+        
+        if (hashValue <= best) {
+            best = hashValue;
+        }
 
         // check if the hash meets the difficulty criteria
         if (hashValue <= DIFF) {
@@ -222,7 +228,7 @@ void mine(int thread_id) {
                     unit = "KH";
                 }
         
-                cout << YELLOW << "Hash Rate: " << readableHashRate << " " << unit << "/sec" << RESET << endl;
+                cout << YELLOW << "Hash Rate: " << readableHashRate << " " << unit << "/sec Best: " << best.toHex() << RESET << endl;
         
                 // Reset the counters
                 startTime = chrono::steady_clock::now();
