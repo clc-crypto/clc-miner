@@ -37,8 +37,10 @@ Run the miner
 
 ### Use pre-built x64 clcminer for 64 bit systems (might fail!)
 
-Clone this repository locally
+Clone this repository locally and install dependencies
 ```bash
+sudo apt update && sudo apt install -y cmake g++ make pkg-config libssl-dev libcurl4-openssl-dev libsecp256k1-dev nlohmann-json3-dev
+
 git clone https://github.com/clc-crypto/clc-miner.git
 ```
 
