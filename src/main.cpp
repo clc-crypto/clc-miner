@@ -10,6 +10,7 @@
 #include <secp256k1.h>
 #include <fstream>
 #include <cassert>
+#include <string>
 #include "lib/uint256.h"
 #include "config.h"
 #include "colors.h"
@@ -108,6 +109,16 @@ void updateJob() {
     }
 }
 
+void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+    if (from.empty()) return;  // Avoid infinite loop for empty "from"
+
+    size_t startPos = 0;
+    while ((startPos = str.find(from, startPos)) != std::string::npos) {
+        str.replace(startPos, from.length(), to);
+        startPos += to.length(); // Move past the replaced part
+    }
+}
+
 // Function to submit the found hash, public key, and signature
 void submitHash(const string& pubKeyHex, const string& sign, const string& hashHex, const string& privHexKey) {
     CURL* curl = curl_easy_init();
@@ -148,6 +159,11 @@ void submitHash(const string& pubKeyHex, const string& sign, const string& hashH
         cout << RED << "Error: " << cfg.getRewardsDir() << " directory does not exist!" << RESET << endl;
         assert(false);
     }
+
+    std::string cmd = cfg.getOnMined();
+    if (cmd == "") return;
+    replaceAll(cmd, "\%cid\%", to_string(data["id"].get<int>()));
+    system(cmd.c_str()); // execute user specified command on mined.
 }
 
 // Mining function for each thread

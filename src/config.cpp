@@ -73,6 +73,13 @@ Config::Config(const string& path) {
     } else {
         reportUser = "none";
     }
+
+    if (configData.contains("onMined") && configData["onMined"].is_string()) {
+        onMined = configData["onMined"].get<string>();
+        cout << YELLOW << "Going to execute: '" << onMined << "' everytime a coin is mined!" << RESET << endl;
+    } else {
+        onMined = "";
+    }
 }
 
 string Config::getServer() const {
@@ -93,4 +100,8 @@ string Config::getReportServer() const {
 
 string Config::getReportUser() const {
     return reportUser;
+}
+
+string Config::getOnMined() const {
+    return onMined;
 }

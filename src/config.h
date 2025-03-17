@@ -9,6 +9,7 @@ private:
     std::string rewards;
     std::string reportServer;
     std::string reportUser;
+    std::string onMined;
     int threads;
 
 public:
@@ -17,6 +18,7 @@ public:
     std::string getRewardsDir() const;
     std::string getReportServer() const;
     std::string getReportUser() const;
+    std::string getOnMined() const;
     int getThreads() const;
 };
 
