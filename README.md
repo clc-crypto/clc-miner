@@ -8,6 +8,16 @@ Clone this repository locally
 git clone https://github.com/clc-crypto/clc-miner.git
 ```
 
+Install dependencies
+for ubuntu / debian
+```bash
+sudo apt update && sudo apt install -y cmake g++ make pkg-config libssl-dev libcurl4-openssl-dev libsecp256k1-dev nlohmann-json3-dev libconfig-dev
+```
+for Arch
+```bash
+sudo pacman -Syu --needed cmake gcc make pkgconf openssl curl secp256k1 nlohmann-json libconfig
+```
+
 Build the miner
 ```bash
 mkdir build
@@ -18,21 +28,4 @@ mv clcminer ../
 cd ..
 rm -fr build
 ```
-#### If you encounter any errors, please install all the required libraries.
-
-Run the miner
-```./clcminer```
-
-## OR
-
-### Use pre-built x64 clcminer
-
-Clone this repository locally
-```bash
-git clone https://github.com/clc-crypto/clc-miner.git
-```
-
-Run clc-miner
-```bash
-./clcminer64
-```
+#### If you encounter any errors, please install all the required libraries manually.
