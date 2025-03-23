@@ -257,17 +257,17 @@ void mine(int thread_id) {
                 string unit = "H";
                 double readableHashRate = hashesPerSecond;
         
-                if (readableHashRate >= 1e12) {  // Greater than or equal to 1 TH/s
-                    readableHashRate /= 1e12;
+                if (readableHashRate >= 1e12 * 4) {  // Greater than or equal to 1 TH/s
+                    readableHashRate /= 1e12 * 4;
                     unit = "TH";
-                } else if (readableHashRate >= 1e9) {  // Greater than or equal to 1 GH/s
-                    readableHashRate /= 1e9;
+                } else if (readableHashRate >= 1e9 * 4) {  // Greater than or equal to 1 GH/s
+                    readableHashRate /= 1e9 * 4;
                     unit = "GH";
-                } else if (readableHashRate >= 1e6) {  // Greater than or equal to 1 MH/s
-                    readableHashRate /= 1e6;
+                } else if (readableHashRate >= 1e6 * 4) {  // Greater than or equal to 1 MH/s
+                    readableHashRate /= 1e6 * 4;
                     unit = "MH";
-                } else if (readableHashRate >= 1e3) {  // Greater than or equal to 1 KH/s
-                    readableHashRate /= 1e3;
+                } else if (readableHashRate >= 1e3 * 4) {  // Greater than or equal to 1 KH/s
+                    readableHashRate /= 1e3 * 4;
                     unit = "KH";
                 }
         
