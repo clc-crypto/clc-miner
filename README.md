@@ -1,5 +1,5 @@
 # DEPRICATED MINER, MOVE TO NEW MINER
-[New Miner](https://github.com/clc-crypto/clc-miner)
+[New Miner](https://github.com/clc-crypto/clc-miner2)
 
 # CLC Miner
 A fast miner, written in C++ for the CLC crypto.
